@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject private var httpsEngine: HttpsEngine
+    @EnvironmentObject private var secutiryInfo: SecureInformation
     @State private var publicCert: String? = nil
     @State private var privateKey: String? = nil
     @State private var clientID: String? = nil
@@ -19,8 +21,8 @@ struct SettingsView: View {
             Form {
                 Section {
                     HStack{
-                        Text(clientID ?? "Missing")
-                            .foregroundStyle(clientID == nil ? .red : .black)
+                        Text(secutiryInfo.clientId ?? "Missing")
+                            .foregroundStyle(secutiryInfo.clientId != nil ? .green : .red)
                         Spacer()
                         Button {
                             
@@ -30,12 +32,12 @@ struct SettingsView: View {
                         .buttonStyle(.bordered)
                     }
                 } header: {
-                    Text("Client ID")
+                    Text("Client Id")
                 }
                 Section {
                     HStack{
-                        Text(clientSecret ?? "Missing")
-                            .foregroundStyle(clientSecret == nil ? .red : .black)
+                        Text(secutiryInfo.clientSecret ?? "Missing")
+                            .foregroundStyle(secutiryInfo.clientSecret != nil ? .green : .red)
                         Spacer()
                         Button {
                             
@@ -50,11 +52,12 @@ struct SettingsView: View {
                 
                 Section {
                     HStack{
-                        Text(publicCert ?? "Missing")
-                            .foregroundStyle(privateKey == nil ? .red : .black)
+                        Text(secutiryInfo.publicCertificate != nil ? "OK" : "Missing")
+                            .foregroundStyle(secutiryInfo.publicCertificate != nil ? .green : .red)
                         Spacer()
                         Button {
-                            
+                            let pubCert = try? secutiryInfo.getCertFromFile()
+                            secutiryInfo.publicCertificate = pubCert
                         } label: {
                             Text("Add")
                         }
@@ -65,11 +68,12 @@ struct SettingsView: View {
                 }
                 Section {
                     HStack{
-                        Text(privateKey ?? "Missing")
-                            .foregroundStyle(privateKey == nil ? .red : .black)
+                        Text(secutiryInfo.privateKey != nil ? "OK" : "Missing")
+                            .foregroundStyle(secutiryInfo.privateKey != nil ? .green : .red)
                         Spacer()
                         Button {
-                            
+                            let privKey = try? secutiryInfo.getPrivKeyFromFile()
+                            secutiryInfo.privateKey = privKey
                         } label: {
                             Text("Add")
                         }
@@ -86,4 +90,6 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+        .environmentObject(HttpsEngine())
+        .environmentObject(SecureInformation())
 }
