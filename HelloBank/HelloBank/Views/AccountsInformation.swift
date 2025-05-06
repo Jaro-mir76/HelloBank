@@ -9,13 +9,15 @@ import SwiftUI
 
 struct AccountsInformation: View {
     var body: some View {
-        VStack{
-            Label("Bank" ,systemImage: "eurosign.bank.building")
-                .labelStyle(.iconOnly)
-            Text("Hello, Bank!")
+        NavigationStack {
+            VStack{
+                Text("Accounts information")
+                    .font(.title)
+                Spacer()
+            }
         }
         .toolbar {
-            ToolbarItem {
+            ToolbarItem(placement: .confirmationAction){
                 Button("Settings", systemImage: "gear") {
                     
                 }
