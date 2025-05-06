@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct HelloBankApp: App {
+    @StateObject private var httpEngine = HttpsEngine()
+    @StateObject private var securityInformation = SecureInformation()
+    
     var body: some Scene {
         WindowGroup {
             TabsView()
+                .environmentObject(httpEngine)
+                .environmentObject(securityInformation)
         }
     }
 }

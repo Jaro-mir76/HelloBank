@@ -64,3 +64,6 @@ fastlane/test_output
 #Excluding folder with public/private/etc keys so they are not pushed to git
 
 HelloBank/HelloBank/secrets/**
+
+#Excluding MacOS files
+**/.DS_Store
