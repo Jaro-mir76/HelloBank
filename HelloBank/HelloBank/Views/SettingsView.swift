@@ -24,7 +24,9 @@ struct SettingsView: View {
                             .foregroundStyle(securityEngine.clientId != nil ? .green : .red)
                         Spacer()
                         Button {
-                            securityEngine.clientId = "6b5e1046-c418-4ee6-a303-026411b05d4a"
+                            if let clientId = securityEngine.getClientId(){
+                                securityEngine.clientId = clientId
+                            }
                         } label: {
                             Text("Add")
                         }
@@ -39,7 +41,9 @@ struct SettingsView: View {
                             .foregroundStyle(securityEngine.clientSecret != nil ? .green : .red)
                         Spacer()
                         Button {
-                            securityEngine.clientSecret = "edc1fd3b-c3eb-4d74-a461-582e9f9b72c6"
+                            if let clientSecret = securityEngine.getclientSecret(){
+                                securityEngine.clientSecret = clientSecret
+                            }
                         } label: {
                             Text("Add")
                         }

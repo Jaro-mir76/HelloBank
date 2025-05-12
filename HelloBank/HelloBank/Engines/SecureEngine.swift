@@ -30,12 +30,39 @@ class SecureEngine: ObservableObject {
                 DispatchQueue.main.async {
                     self.walletId = w.walletId
                     self.walletSecret = w.walletSecret
+                    print ("walletId: \(self.walletId)")
                 }
             }
         }catch let error as CustomError{
             self.error = error
         }catch let error {
             self.error = .otherError(innerError: error)
+        }
+    }
+    
+    func getClientId() -> String? {
+        if let file = Bundle.main.url(forResource: "clientId", withExtension: nil) {
+            guard let fileContent = try? String(contentsOf: file, encoding: .utf8) else {
+                self.error = CustomError.cannotReadFile
+                return nil
+            }
+            return fileContent
+        }else {
+            self.error = CustomError.cannotReadFile
+            return nil
+        }
+    }
+    
+    func getclientSecret() -> String? {
+        if let file = Bundle.main.url(forResource: "clientSecret", withExtension: nil) {
+            guard let fileContent = try? String(contentsOf: file, encoding: .utf8) else {
+                self.error = CustomError.cannotReadFile
+                return nil
+            }
+            return fileContent
+        }else {
+            self.error = CustomError.cannotReadFile
+            return nil
         }
     }
     
