@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject private var httpsEngine: HttpsEngine
-    @EnvironmentObject private var secutiryInfo: SecureInformation
+    @EnvironmentObject private var securityEngine: SecureEngine
     @State private var publicCert: String? = nil
     @State private var privateKey: String? = nil
     @State private var clientID: String? = nil
@@ -21,11 +20,11 @@ struct SettingsView: View {
             Form {
                 Section {
                     HStack{
-                        Text(secutiryInfo.clientId ?? "Missing")
-                            .foregroundStyle(secutiryInfo.clientId != nil ? .green : .red)
+                        Text(securityEngine.clientId ?? "Missing")
+                            .foregroundStyle(securityEngine.clientId != nil ? .green : .red)
                         Spacer()
                         Button {
-                            
+                            securityEngine.clientId = "6b5e1046-c418-4ee6-a303-026411b05d4a"
                         } label: {
                             Text("Add")
                         }
@@ -36,11 +35,11 @@ struct SettingsView: View {
                 }
                 Section {
                     HStack{
-                        Text(secutiryInfo.clientSecret ?? "Missing")
-                            .foregroundStyle(secutiryInfo.clientSecret != nil ? .green : .red)
+                        Text(securityEngine.clientSecret != nil ? "OK" : "Missing")
+                            .foregroundStyle(securityEngine.clientSecret != nil ? .green : .red)
                         Spacer()
                         Button {
-                            
+                            securityEngine.clientSecret = "edc1fd3b-c3eb-4d74-a461-582e9f9b72c6"
                         } label: {
                             Text("Add")
                         }
@@ -52,12 +51,13 @@ struct SettingsView: View {
                 
                 Section {
                     HStack{
-                        Text(secutiryInfo.publicCertificate != nil ? "OK" : "Missing")
-                            .foregroundStyle(secutiryInfo.publicCertificate != nil ? .green : .red)
+                        Text(securityEngine.publicCertificate != nil ? "OK" : "Missing")
+                            .foregroundStyle(securityEngine.publicCertificate != nil ? .green : .red)
                         Spacer()
                         Button {
-                            let pubCert = try? secutiryInfo.getCertFromFile()
-                            secutiryInfo.publicCertificate = pubCert
+                            if let pubCert = securityEngine.getCertFromFile(){
+                                securityEngine.publicCertificate = pubCert
+                            }
                         } label: {
                             Text("Add")
                         }
@@ -68,12 +68,13 @@ struct SettingsView: View {
                 }
                 Section {
                     HStack{
-                        Text(secutiryInfo.privateKey != nil ? "OK" : "Missing")
-                            .foregroundStyle(secutiryInfo.privateKey != nil ? .green : .red)
+                        Text(securityEngine.privateKey != nil ? "OK" : "Missing")
+                            .foregroundStyle(securityEngine.privateKey != nil ? .green : .red)
                         Spacer()
                         Button {
-                            let privKey = try? secutiryInfo.getPrivKeyFromFile()
-                            secutiryInfo.privateKey = privKey
+                            if let privKey = securityEngine.getPrivKeyFromFile(){
+                                securityEngine.privateKey = privKey
+                            }
                         } label: {
                             Text("Add")
                         }
@@ -82,14 +83,27 @@ struct SettingsView: View {
                 } header: {
                     Text("Private key")
                 }
+                Section {
+                    HStack{
+                        Text(securityEngine.walletId != nil ? "OK" : "Missing")
+                            .foregroundStyle(securityEngine.walletId != nil ? .green : .red)
+                        Spacer()
+                        Button {
+                            securityEngine.requestWalletId()
+                        } label: {
+                            Text("Get")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                } header: {
+                    Text("Wallet")
+                }
             }
-//            Spacer()
         }
     }
 }
 
 #Preview {
     SettingsView()
-        .environmentObject(HttpsEngine())
-        .environmentObject(SecureInformation())
+        .environmentObject(SecureEngine())
 }

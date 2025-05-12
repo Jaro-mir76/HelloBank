@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Wallet {
+struct Wallet: Decodable {
     var walletId: String
     var walletSecret: String
 }

@@ -20,9 +20,9 @@ enum CustomError: Error, LocalizedError {
     var errorDescription: String {
         switch self {
         case .certKeyMissing:
-            return "Public certificate and/or Private key are missing!"
+            return "Public certificate or private key are missing!"
         case .certKeyInconsistent:
-            return "Public certificate andr Private key are inconsistent!"
+            return "Public certificate and private key are inconsistent!"
         case .badServerResponse:
             return "Bad server response!"
         case .clientDetailsMissing:
@@ -43,7 +43,7 @@ enum CustomError: Error, LocalizedError {
         case .certKeyMissing:
             return "Please upload certificate/key."
         case .certKeyInconsistent:
-            return "Please upload correct certificate and corresponding Private key."
+            return "Please upload correct certificate and corresponding private key."
         case .badServerResponse:
             return "Please try again."
         case .clientDetailsMissing:
@@ -51,7 +51,7 @@ enum CustomError: Error, LocalizedError {
         case .wrongCertificateFile:
             return "Please provide correct certificate file."
         case .wrongKeyFile:
-            return "Please provide correct Private key file."
+            return "Please provide correct private key file."
         case .cannotReadFile:
             return "Please provide different file."
         case .otherError:

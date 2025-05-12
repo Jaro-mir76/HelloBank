@@ -24,12 +24,10 @@ struct TabsView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction){
                 Button("Settings"){
-                    
                 }
             }
         }
     }
-    
 }
 
 #Preview {

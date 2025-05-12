@@ -7,32 +7,56 @@
 
 import Foundation
 
-class SecureInformation: ObservableObject {
-    var securityIdentiry: SecIdentity? = nil
+class SecureEngine: ObservableObject {
+    var securityIdentity: SecIdentity? = nil
     @Published var publicCertificate: SecCertificate? = nil
     @Published var privateKey: SecKey? = nil
     var apiKey: String? = nil
     @Published var clientId: String? = nil
     @Published var clientSecret: String? = nil
-    var walletId: String? = nil
+    @Published var walletId: String? = nil
     var walletSecret: String? = nil
     var accessToken: String? = nil
+    @Published var error: CustomError? = nil
+    var httpsEngine: HttpsEngine!
     
+    init() {
+        self.httpsEngine = HttpsEngine(secureEngine: self)
+    }
     
-    func getCertFromFile() throws(CustomError) -> SecCertificate? {
+    func requestWalletId() {
         do {
-            let certRawData = try getImportantFileContent("public-key", "pem")
-            guard let publicCert = SecCertificateCreateWithData(nil, certRawData as NSData) else {throw CustomError.wrongCertificateFile}
-            if let privK = privateKey {
-                guard checkCertKeyConsistency(publicCert, privK) else {throw CustomError.certKeyInconsistent}
+            try httpsEngine.getWallet() {w in
+                DispatchQueue.main.async {
+                    self.walletId = w.walletId
+                    self.walletSecret = w.walletSecret
+                }
             }
-            return publicCert
-        }catch {
-            throw .otherError(innerError: error)
+        }catch let error as CustomError{
+            self.error = error
+        }catch let error {
+            self.error = .otherError(innerError: error)
         }
     }
     
-    func getPrivKeyFromFile() throws(CustomError) -> SecKey? {
+    func getCertFromFile() -> SecCertificate? {
+        do {
+            let certRawData = try getImportantFileContent("public-key", "pem")
+            guard let publicCert = SecCertificateCreateWithData(nil, certRawData as NSData) else {throw CustomError.wrongCertificateFile}
+//            If there is already private key then try to create security identity
+            if let privK = self.privateKey {
+                try createSecIdentity(publicCert, privK)
+            }
+            return publicCert
+        }catch let error as CustomError{
+            self.error = error
+        }catch {
+            self.error = .otherError(innerError: error)
+        }
+        return nil
+    }
+    
+    func getPrivKeyFromFile() -> SecKey? {
         do {
             let rawData = try getImportantFileContent("private-key", "key")
             guard let privKeyRawData = extractKeyFromASN1(rawData) else {throw CustomError.wrongKeyFile}
@@ -40,24 +64,57 @@ class SecureInformation: ObservableObject {
                 kSecAttrKeyType: kSecAttrKeyTypeRSA,
                 kSecAttrKeyClass: kSecAttrKeyClassPrivate
             ] as NSDictionary, nil) else {throw CustomError.wrongKeyFile}
-            if let cert = publicCertificate {
-                guard checkCertKeyConsistency(cert, privateKey) else {throw CustomError.certKeyInconsistent}
+//            If there is already certificate then try to create security identity
+            if let cert = self.publicCertificate {
+                try createSecIdentity(cert, privateKey)
             }
             return privateKey
+        }catch let error as CustomError{
+            self.error = error
         }catch {
-            throw .otherError(innerError: error)
+            self.error = .otherError(innerError: error)
+        }
+        return nil
+    }
+    
+    func createSecIdentity(_ cert: SecCertificate, _ privKey: SecKey)throws {
+        guard checkCertKeyConsistency(cert, privKey) else {throw CustomError.certKeyInconsistent}
+
+//          Attempt to add and check result, if error is errSecDuplicateItem it means cert/privKey is already there but we can continue, otherwise we stop immediatelly
+        var exitCode: OSStatus
+        exitCode = SecItemAdd([kSecValueRef: cert] as NSDictionary, nil)
+        guard exitCode == errSecSuccess || exitCode == errSecDuplicateItem else {throw NSError(domain: NSOSStatusErrorDomain, code: Int(exitCode))
+        }
+        exitCode = SecItemAdd([kSecValueRef: privKey] as NSDictionary, nil)
+        guard exitCode == errSecSuccess || exitCode == errSecDuplicateItem else {throw NSError(domain: NSOSStatusErrorDomain, code: Int(exitCode))
+        }
+        
+//        At that stage identity should be automatically created so we search it to add to securityIdentity variable
+        let searchIdentity = [
+            kSecClass: kSecClassIdentity,
+            kSecMatchLimit: kSecMatchLimitAll,
+            kSecReturnRef: true
+        ] as NSDictionary
+        var searchResult: CFTypeRef? = nil
+        exitCode = SecItemCopyMatching(searchIdentity, &searchResult)
+        guard exitCode == errSecSuccess else {throw NSError(domain: NSOSStatusErrorDomain, code: Int(exitCode))
+        }
+        let identities = searchResult! as! [SecIdentity]
+//        Among all found identities it search the one that corresponds to our public certificate
+        let identity = identities.first(where: {i in
+            var certRef: SecCertificate?
+            let _ = SecIdentityCopyCertificate(i, &certRef)
+            return CFEqual(certRef, cert)
+        })
+        if identity != nil {
+            self.securityIdentity = identity
         }
     }
     
     func checkCertKeyConsistency(_ cert: SecCertificate, _ privKey: SecKey) -> Bool {
         let certPublicKey = SecCertificateCopyKey(cert)
         let privKeyPublicKey = SecKeyCopyPublicKey(privKey)
-        
         return CFEqual(certPublicKey, privKeyPublicKey)
-    }
-    
-    func createSecIdentity() {
-        
     }
     
     func getImportantFileContent(_ fileName: String, _ fileExtension: String) throws -> Data {
@@ -85,7 +142,6 @@ class SecureInformation: ObservableObject {
         var index = 22 // ASN.1 struct must have 0x04 at byte 22
         guard keyBytes[index] == 0x04 else { return nil }
         index += 1
-        
         var keyLength = Int(keyBytes[index])
         index += 1
 
